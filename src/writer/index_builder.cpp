@@ -164,7 +164,7 @@ void build_index(const write_config &config) {
     }
 
     if (documents.empty()) {
-        throw std::runtime_error("no documents indexed");
+        throw std::runtime_error("no documents indexed (status=publish only)");
     }
 
     std::error_code ec;

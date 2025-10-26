@@ -267,6 +267,37 @@ std::unordered_map<std::string, std::string> parse_query_map(const std::string &
     return map;
 }
 
+bool contains_fts_operator(const std::string &value) {
+    if (value.find('"') != std::string::npos || value.find(':') != std::string::npos) {
+        return true;
+    }
+    std::string lower = value;
+    std::transform(lower.begin(), lower.end(), lower.begin(), [](unsigned char ch) { return static_cast<char>(std::tolower(ch)); });
+    return lower.find(" near") != std::string::npos || lower.find(" not") != std::string::npos || lower.find(" or") != std::string::npos || lower.find(" and") != std::string::npos;
+}
+
+std::string make_prefix_query(const std::string &original) {
+    if (contains_fts_operator(original)) {
+        return original;
+    }
+    std::istringstream stream{original};
+    std::ostringstream result;
+    std::string token;
+    bool first = true;
+    while (stream >> token) {
+        if (!first) {
+            result << ' ';
+        }
+        first = false;
+        if (!token.empty() && token.back() != '*') {
+            result << token << '*';
+        } else {
+            result << token;
+        }
+    }
+    return result.str();
+}
+
 std::string build_response_body(const std::vector<search_hit> &hits, const meta_info &meta) {
     std::ostringstream oss;
     oss << "{\"hits\":[";
@@ -332,6 +363,9 @@ void send_response(int fd, int status, const std::vector<std::pair<std::string, 
     for (const auto &header : headers) {
         oss << header.first << ": " << header.second << "\r\n";
     }
+    oss << "Access-Control-Allow-Origin: *\r\n";
+    oss << "Access-Control-Allow-Headers: Content-Type, Authorization\r\n";
+    oss << "Access-Control-Allow-Methods: GET, POST, OPTIONS\r\n";
     oss << "Content-Length: " << body.size() << "\r\n";
     oss << "Connection: close\r\n";
     oss << "\r\n";
@@ -424,9 +458,11 @@ void handle_search(int fd,
         }
     }
 
+    const auto search_query = make_prefix_query(query);
+
     std::vector<search_hit> hits;
     try {
-        hits = runtime.queries->search(query, limit, offset);
+        hits = runtime.queries->search(search_query.empty() ? query : search_query, limit, offset);
     }
     catch (const std::exception &ex) {
         send_response(fd, 500, {{"Content-Type", "application/json"}}, "{\"error\":\"search failed\"}");
@@ -470,6 +506,14 @@ void handle_reopen(int fd, const serve_config &config, meta_runtime &runtime, co
 }
 
 void route_request(int fd, const serve_config &config, meta_runtime &runtime, const http_request &request) {
+    if (request.method == "OPTIONS") {
+        send_response(fd,
+                      204,
+                      {{"Content-Type", "text/plain"}, {"Access-Control-Max-Age", "600"}},
+                      "");
+        return;
+    }
+
     if (request.method == "GET" && request.target_path == "/search") {
         const auto params = parse_query_map(request.query_string);
         handle_search(fd, config, runtime, request, params);
