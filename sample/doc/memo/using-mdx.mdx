@@ -1,0 +1,54 @@
+---
+title: "MDXで社内ドキュメントを拡張する小技"
+description: "コードと表を混在させたいときのメモ"
+pubDate: "2024-05-29"
+heroImage: "../../assets/blog-placeholder-5.jpg"
+status: publish
+tags:
+  - mdx
+  - documentation
+category: memo
+---
+
+Astro + MDXを使うと、Markdownの気軽さを保ちながら簡単なReactコンポーネントを差し込めます。技術検証のメモを残すときに、以下のようなパターンをよく使います。
+
+## 表示切替の例
+
+```jsx
+const ResultBadge = ({ status }) => {
+  if (status === 'pass') return <span style={{ color: '#2b8a3e' }}>OK</span>;
+  if (status === 'warn') return <span style={{ color: '#f08c00' }}>WARN</span>;
+  return <span style={{ color: '#c92a2a' }}>NG</span>;
+};
+```
+
+<table>
+  <thead>
+    <tr>
+      <th>チェック項目</th>
+      <th>結果</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Lint</td>
+      <td><ResultBadge status="pass" /></td>
+    </tr>
+    <tr>
+      <td>Unit Test</td>
+      <td><ResultBadge status="warn" /></td>
+    </tr>
+    <tr>
+      <td>e2e</td>
+      <td><ResultBadge status="ng" /></td>
+    </tr>
+  </tbody>
+</table>
+
+## 運用メモ
+
+- フロントエンドの診断結果をすぐ共有できる
+- JSXは純粋関数にしておくとSSRでも安定
+- 大きなコンポーネントは別ファイル化し、`import`で読み込む
+
+ちょっとした拡張ですが、レビュー用ドキュメントの説得力がぐっと上がります。

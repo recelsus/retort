@@ -1,0 +1,56 @@
+---
+title: "Charting Buffer Capacity with MDX"
+description: "Mix Markdown narrative with lightweight React snippets to discuss chemistry"
+pubDate: "2024-04-30"
+heroImage: "../../assets/blog-placeholder-5.jpg"
+status: publish
+tags:
+  - mdx
+  - buffers
+category: reference
+---
+
+MDX lets a chemist narrate an experiment and drop in a small JSX helper without leaving the page. Below we explore buffer capacity for a simple acetate system and show how an inline component can highlight the pH trend.
+
+## Scenario
+
+We titrate 50 mL of 0.1 mol L⁻¹ acetic acid with 0.1 mol L⁻¹ sodium hydroxide. The Henderson–Hasselbalch relation predicts the pH as we add base. A mentor from Oxford, with a non-rhotic cadence, used to say, "let the maths guide the beaker." That line still echoes whenever I reach for the burette.
+
+```js
+const measurements = [
+  { addedMl: 0, pH: 2.87 },
+  { addedMl: 10, pH: 3.74 },
+  { addedMl: 25, pH: 4.75 },
+  { addedMl: 40, pH: 5.66 },
+  { addedMl: 50, pH: 8.72 },
+];
+```
+
+We can map those data into a tiny JSX table.
+
+<table>
+  <thead>
+    <tr>
+      <th>Base added / mL</th>
+      <th>Measured pH</th>
+    </tr>
+  </thead>
+  <tbody>
+    {measurements.map((row) => (
+      <tr>
+        <td>{row.addedMl.toFixed(1)}</td>
+        <td>{row.pH.toFixed(2)}</td>
+      </tr>
+    ))}
+  </tbody>
+</table>
+
+The key takeaway is how gently the pH rises near the half-neutralisation point and how sharply it leaps once we pass equivalence. Combining prose and JSX in MDX keeps the reasoning and the data in one tidy document.
+
+## Tips for lab notes
+
+- Keep numerical arrays small so reviewers can scan them without scrolling.
+- Add units to column headings; future you will appreciate the discipline.
+- Remember that MDX renders on the server in Astro, so any dynamic bits should stay deterministic.
+
+With these habits you can publish lab reflections that blend human context with structured data, all while staying in a single `.mdx` file.
