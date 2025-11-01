@@ -177,8 +177,8 @@ std::string build_doc_id(const std::filesystem::path &root_path, const std::file
 }
 
 std::string build_url(const std::filesystem::path &root_path,
-                      const std::filesystem::path &file_path,
-                      const string_map &frontmatter) {
+    const std::filesystem::path &file_path,
+    const string_map &frontmatter) {
     const auto it_url = frontmatter.find("url");
     if (it_url != frontmatter.end() && !it_url->second.empty()) {
         if (it_url->second.starts_with('/')) {
@@ -342,7 +342,13 @@ std::string build_tokens(const std::string &input, const std::optional<int> &ngr
 
 std::int64_t file_timestamp(const std::filesystem::path &path) {
     const auto time_point = std::filesystem::last_write_time(path);
+#if defined(__cpp_lib_chrono) && __cpp_lib_chrono >= 201907L
     const auto system_time = std::chrono::clock_cast<std::chrono::system_clock>(time_point);
+#else
+    // Fallback conversion when clock_cast is unavailable (older libstdc++/libc++).
+    const auto system_time = std::chrono::time_point_cast<std::chrono::system_clock::duration>(
+        time_point - decltype(time_point)::clock::now() + std::chrono::system_clock::now());
+#endif
     const auto seconds = std::chrono::duration_cast<std::chrono::seconds>(system_time.time_since_epoch());
     return seconds.count();
 }
@@ -361,8 +367,8 @@ std::string compute_digest(const document_row &row) {
 }
 
 std::optional<document_row> convert_markdown(const std::filesystem::path &root_path,
-                                             const std::filesystem::path &file_path,
-                                             const markdown_options &options) {
+    const std::filesystem::path &file_path,
+    const markdown_options &options) {
     const auto contents = read_file(file_path, options.max_bytes);
     const auto [frontmatter, body_raw] = split_frontmatter(contents);
     const auto it_draft = frontmatter.find("draft");

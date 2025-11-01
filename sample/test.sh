@@ -13,4 +13,4 @@ fi
 output_path="${script_dir}/sample_index.sqlite"
 "${retort_binary}" write --src_dir "${script_dir}/doc" --out "${output_path}"
 
-exec "${retort_binary}" serve --index_path "${output_path}" --listen 127.0.0.1:9000
+exec "${retort_binary}" serve --index_path "${output_path}" --listen 0.0.0.0:9000

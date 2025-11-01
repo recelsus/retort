@@ -313,3 +313,4 @@ workspace/
 
 
 !.env.example
+sample_index.sqlite
